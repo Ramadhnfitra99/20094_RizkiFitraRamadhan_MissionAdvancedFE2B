@@ -33,7 +33,7 @@ function toApiPayload(movie: MovieDraft) {
       rating: movie.rating,
       year: movie.year,
       poster: movie.poster,
-      application: "chill-fe3b",
+      application: "chill-advanced-fe2b",
     },
   };
 }

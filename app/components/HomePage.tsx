@@ -1,7 +1,7 @@
 "use client";
 
 import { continueWatching, newReleases, topRated, trending } from "../data/media";
-import { MoviesProvider, useMovies } from "../context/MoviesContext";
+import { useMoviesApi } from "../hooks/useMoviesApi";
 import { useMyList } from "../hooks/useMyList";
 import { CustomMoviesCrud } from "./CustomMoviesCrud";
 import { Hero } from "./Hero";
@@ -20,7 +20,7 @@ function HomeContent() {
     createMovie,
     updateMovie,
     deleteMovie,
-  } = useMovies();
+  } = useMoviesApi();
 
   return (
     <>
@@ -52,9 +52,5 @@ function HomeContent() {
 }
 
 export function HomePage() {
-  return (
-    <MoviesProvider>
-      <HomeContent />
-    </MoviesProvider>
-  );
+  return <HomeContent />;
 }

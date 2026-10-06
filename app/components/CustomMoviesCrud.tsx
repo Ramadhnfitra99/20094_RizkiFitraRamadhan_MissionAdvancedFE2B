@@ -383,7 +383,7 @@ export function CustomMoviesCrud({
     <section className="movie-crud" id="koleksi-saya" aria-labelledby="movie-crud-title" aria-busy={loading || pending}>
       <div className="movie-crud__header">
         <div>
-          <span className="movie-crud__eyebrow">CRUD API INTERAKTIF</span>
+          <span className="movie-crud__eyebrow">REDUX TOOLKIT · CRUD API</span>
           <h2 id="movie-crud-title">Kelola Koleksi Film</h2>
           <p>GET, POST, PUT, dan DELETE film secara langsung melalui REST API.</p>
         </div>
@@ -396,7 +396,7 @@ export function CustomMoviesCrud({
             <span className="movie-api-status__dot" aria-hidden="true" />
             <div>
               <strong>{apiError ? "API bermasalah" : loading || pending ? "Sinkronisasi API" : "REST API aktif"}</strong>
-              <small>GET · POST · PUT · DELETE</small>
+              <small>Redux Store · GET · POST · PUT · DELETE</small>
               {lastSyncedAt && <small>Sinkron terakhir {lastSyncedAt.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</small>}
             </div>
             <button type="button" onClick={() => void onRefresh()} disabled={loading || pending}>

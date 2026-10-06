@@ -1,60 +1,86 @@
-# CHILL — Mission Advanced Front End 1B
+# CHILL — Mission Advanced Front End 2B
 
-Aplikasi katalog film responsif berbasis React dan Next.js. Mission ini melanjutkan CRUD array pada mission sebelumnya menjadi CRUD dinamis melalui REST API.
+Aplikasi katalog film responsif berbasis React dan Next.js. Mission ini melanjutkan integrasi REST API dari Advanced FE 1B dengan state management global menggunakan **Redux Toolkit** dan **React Redux**.
 
 ## Link project
 
-- Live demo: [chill-advanced-fe1b-rizki.vercel.app](https://chill-advanced-fe1b-rizki.vercel.app)
-- Repository: [20094_RizkiFitraRamadhan_MissionAdvancedFE1B](https://github.com/Ramadhnfitra99/20094_RizkiFitraRamadhan_MissionAdvancedFE1B)
+- Live demo: [chill-advanced-fe2b-rizki.vercel.app](https://chill-advanced-fe2b-rizki.vercel.app)
+- Repository: [20094_RizkiFitraRamadhan_MissionAdvancedFE2B](https://github.com/Ramadhnfitra99/20094_RizkiFitraRamadhan_MissionAdvancedFE2B)
 
-## Fitur utama
+## Kesesuaian mission
 
-- `GET` koleksi film dari REST API.
-- `POST` film baru beserta poster, genre, rating, dan tahun.
-- `PUT` pembaruan seluruh data film.
-- `DELETE` film dengan konfirmasi.
-- Custom hook `useMoviesApi` untuk memisahkan state dan seluruh logika asynchronous.
-- Context API melalui `MoviesProvider` untuk state management.
-- Service API terpisah pada `app/services/api/movieApi.ts`.
-- Base URL API disimpan pada environment variable.
-- Loading state, error state, tombol sinkronisasi, dan indikator status API.
-- Validasi form, pencarian, filter genre, rata-rata rating, serta poster picker.
+### Step 3 — State Management
+
+- Store global dibuat dengan `configureStore` dari Redux Toolkit.
+- State awal koleksi film adalah array kosong pada `moviesSlice`.
+- Data hasil GET API disimpan dalam Redux Store.
+- `StoreProvider` memasang React Redux `Provider` pada root aplikasi.
+- Komponen membaca state melalui typed selector dan mengirim aksi melalui typed dispatch.
+- Loading, pending, error, dan waktu sinkronisasi juga tersimpan secara global.
+
+### Step 4 — Integrasi API ke tampilan React
+
+- `GET` mengambil koleksi film dan menampilkannya di homepage.
+- `POST` menambahkan film baru beserta poster, genre, rating, dan tahun.
+- `PUT` memperbarui film yang dipilih.
+- `DELETE` menghapus film setelah konfirmasi.
+- Seluruh operasi asynchronous dibuat sebagai `createAsyncThunk`.
+- Service API dipisahkan dalam folder `app/services/api`.
+- Base URL API dibaca dari environment variable, bukan di-hardcode di komponen.
+- Custom hook `useMoviesApi` menjadi lapisan reusable antara komponen dan Redux.
+
+## Fitur aplikasi
+
+- CRUD API interaktif langsung pada homepage.
+- Redux Toolkit untuk state global koleksi film.
+- Status REST API dan waktu sinkronisasi terakhir.
+- Validasi form lengkap dan pesan error yang mudah dipahami.
+- Pemilihan poster menggunakan aset film lokal.
+- Pencarian berdasarkan judul/genre dan filter genre.
+- Statistik jumlah film dan rata-rata rating.
+- Daftar Saya tersimpan lokal di browser.
 - Halaman login, register, home, series, Daftar Saya, profil, langganan, dan pembayaran.
 - Responsive untuk desktop, tablet, dan mobile.
-- Font Lato dan aset lokal agar tampilan konsisten.
+- Font Lato dan aset lokal agar tampilan konsisten dengan desain Chill.
 
 ## REST API
 
-Project menggunakan [RESTful API](https://restful-api.dev/) sebagai fake API publik untuk pembelajaran. Service tersebut mendukung CORS serta operasi `GET`, `POST`, `PUT`, dan `DELETE` yang benar-benar dikirim melalui HTTP.
+Project menggunakan [RESTful API](https://restful-api.dev/) sebagai fake API publik untuk pembelajaran. Service tersebut mendukung CORS dan operasi `GET`, `POST`, `PUT`, serta `DELETE` melalui HTTP.
 
-ID object yang dibuat untuk satu browser disimpan di `localStorage`. Data filmnya tetap dibaca dan dimutasi melalui REST API; `localStorage` hanya menyimpan daftar ID agar browser yang sama dapat mengambil koleksinya kembali.
+ID object yang dibuat oleh satu browser disimpan di `localStorage`. Data film tetap dibaca dan dimutasi melalui REST API; `localStorage` hanya menyimpan daftar ID agar koleksi browser yang sama dapat diambil kembali.
 
-> API ini merupakan sandbox publik. Jangan mengirim data pribadi atau rahasia.
+> API merupakan sandbox publik. Jangan mengirim data pribadi atau rahasia.
 
-## Struktur penting
+## Struktur state management
 
 ```text
 app/
 ├── components/
 │   ├── CustomMoviesCrud.tsx
 │   └── HomePage.tsx
-├── context/
-│   └── MoviesContext.tsx
 ├── data/
 │   └── managedMovies.ts
 ├── hooks/
 │   └── useMoviesApi.ts
-└── services/
-    └── api/
-        └── movieApi.ts
+├── services/
+│   └── api/
+│       └── movieApi.ts
+└── store/
+    └── redux/
+        ├── hooks.ts
+        ├── moviesSlice.ts
+        ├── StoreProvider.tsx
+        └── store.ts
 ```
 
-Alur datanya:
+Alur data:
 
 ```text
 CustomMoviesCrud
        ↓ aksi pengguna
-MoviesContext / useMoviesApi
+useMoviesApi (typed dispatch dan selector)
+       ↓
+Redux async thunk → moviesSlice → Redux Store
        ↓
 movieApi service
        ↓ HTTP GET, POST, PUT, DELETE
@@ -63,29 +89,28 @@ RESTful API
 
 ## Menjalankan project
 
-Gunakan Node.js 22 atau yang lebih baru.
+Gunakan Node.js 24.
 
-1. Pasang dependency:
+1. Buka folder project di Visual Studio Code.
+2. Pasang dependency:
 
    ```bash
    npm install
    ```
 
-2. Salin environment example:
-
-   PowerShell:
+3. Salin environment example:
 
    ```powershell
    Copy-Item .env.example .env.local
    ```
 
-3. Jalankan development server:
+4. Jalankan development server:
 
    ```bash
    npm run dev
    ```
 
-4. Buka `http://localhost:3000/home`.
+5. Buka `http://localhost:3000/home`.
 
 ## Pemeriksaan kualitas
 
@@ -101,20 +126,18 @@ npm run build
 NEXT_PUBLIC_MOVIE_API_URL=https://api.restful-api.dev/objects
 ```
 
-File `.env.local` tidak masuk Git. File `.env.example` disertakan agar project mudah dipasang ulang.
+File `.env.local` tidak masuk Git. `.env.example` disertakan agar project dapat dipasang ulang dengan mudah.
 
 ## Deploy ke Vercel
 
-1. Import repository ke Vercel.
-2. Framework preset: **Next.js**.
+1. Import repository GitHub ke Vercel.
+2. Pilih framework preset **Next.js**.
 3. Tambahkan environment variable:
    - Name: `NEXT_PUBLIC_MOVIE_API_URL`
    - Value: `https://api.restful-api.dev/objects`
-4. Deploy.
+4. Jalankan deployment.
 
-Deployment project ini tersedia di [https://chill-advanced-fe1b-rizki.vercel.app](https://chill-advanced-fe1b-rizki.vercel.app).
-
-Tidak diperlukan build command khusus; Vercel akan menjalankan `next build` secara otomatis.
+Tidak diperlukan build command khusus; Vercel menjalankan `next build` secara otomatis.
 
 ## Referensi desain
 
@@ -124,5 +147,5 @@ Tidak diperlukan build command khusus; Vercel akan menjalankan `next build` seca
 
 - Kumpulkan link repository GitHub.
 - Sertakan link deployment Vercel agar aplikasi mudah diperiksa.
-- Isi formulir pengumpulan di Google Classroom.
-- Simpan screenshot formulir sebagai bukti pengumpulan.
+- Isi formulir pengumpulan mission melalui Google Classroom.
+- Simpan screenshot formulir sebagai bukti penyelesaian mission.

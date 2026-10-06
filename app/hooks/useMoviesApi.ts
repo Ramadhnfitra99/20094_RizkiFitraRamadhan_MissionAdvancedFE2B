@@ -1,158 +1,64 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { initialManagedMovies, type ManagedMovie, type MovieDraft } from "../data/managedMovies";
+import { useCallback, useEffect } from "react";
+import type { MovieDraft } from "../data/managedMovies";
 import {
-  addMovie as addMovieRequest,
-  deleteMovie as deleteMovieRequest,
-  getMovies,
-  updateMovie as updateMovieRequest,
-} from "../services/api/movieApi";
-
-const STORAGE_KEY = "chill-fe3b-api-movie-ids";
-
-function readIds() {
-  const value = window.localStorage.getItem(STORAGE_KEY);
-  if (value === null) return null;
-
-  const parsed: unknown = JSON.parse(value);
-  return Array.isArray(parsed)
-    ? parsed.filter((id): id is string => typeof id === "string" && id.length > 0)
-    : [];
-}
-
-function writeIds(movies: ManagedMovie[]) {
-  window.localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(movies.map((movie) => movie.id)),
-  );
-}
-
-function errorMessage(reason: unknown) {
-  if (reason instanceof Error) return reason.message;
-  return "API film belum dapat dihubungi. Silakan coba lagi.";
-}
+  MOVIE_IDS_STORAGE_KEY,
+  createMovie as createMovieThunk,
+  deleteMovie as deleteMovieThunk,
+  fetchMovies,
+  updateMovie as updateMovieThunk,
+} from "../store/redux/moviesSlice";
+import { useAppDispatch, useAppSelector } from "../store/redux/hooks";
 
 export function useMoviesApi() {
-  const [movies, setMovies] = useState<ManagedMovie[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
-  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
-
-  const loadMovies = useCallback(async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      let ids = readIds();
-
-      if (ids === null) {
-        const seededMovies: ManagedMovie[] = [];
-        for (const movie of initialManagedMovies) {
-          const draft: MovieDraft = {
-            title: movie.title,
-            genre: movie.genre,
-            rating: movie.rating,
-            year: movie.year,
-            poster: movie.poster,
-          };
-          seededMovies.push(await addMovieRequest(draft));
-        }
-        writeIds(seededMovies);
-        ids = seededMovies.map((movie) => movie.id);
-      }
-
-      const remoteMovies = await getMovies(ids);
-      setMovies(remoteMovies);
-      writeIds(remoteMovies);
-      setLastSyncedAt(new Date());
-    } catch (reason) {
-      setError(errorMessage(reason));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const dispatch = useAppDispatch();
+  const { items, status, pending, error, lastSyncedAt } = useAppSelector(
+    (state) => state.movies,
+  );
 
   useEffect(() => {
-    let active = true;
-    queueMicrotask(() => {
-      if (active) void loadMovies();
-    });
-    return () => {
-      active = false;
-    };
-  }, [loadMovies]);
+    if (status === "idle") void dispatch(fetchMovies());
+  }, [dispatch, status]);
 
-  const createMovie = useCallback(async (draft: MovieDraft) => {
-    setPending(true);
-    setError("");
-    try {
-      const created = await addMovieRequest(draft);
-      setMovies((current) => {
-        const next = [created, ...current];
-        writeIds(next);
-        return next;
-      });
-      setLastSyncedAt(new Date());
-      return created;
-    } catch (reason) {
-      const message = errorMessage(reason);
-      setError(message);
-      throw new Error(message);
-    } finally {
-      setPending(false);
+  useEffect(() => {
+    if (status === "succeeded") {
+      window.localStorage.setItem(
+        MOVIE_IDS_STORAGE_KEY,
+        JSON.stringify(items.map((movie) => movie.id)),
+      );
     }
-  }, []);
+  }, [items, status]);
 
-  const updateMovie = useCallback(async (id: string, draft: MovieDraft) => {
-    setPending(true);
-    setError("");
-    try {
-      const updated = await updateMovieRequest(id, draft);
-      setMovies((current) => {
-        const next = current.map((movie) => (movie.id === id ? updated : movie));
-        writeIds(next);
-        return next;
-      });
-      setLastSyncedAt(new Date());
-      return updated;
-    } catch (reason) {
-      const message = errorMessage(reason);
-      setError(message);
-      throw new Error(message);
-    } finally {
-      setPending(false);
-    }
-  }, []);
+  const refresh = useCallback(async () => {
+    await dispatch(fetchMovies()).unwrap();
+  }, [dispatch]);
 
-  const removeMovie = useCallback(async (id: string) => {
-    setPending(true);
-    setError("");
-    try {
-      await deleteMovieRequest(id);
-      setMovies((current) => {
-        const next = current.filter((movie) => movie.id !== id);
-        writeIds(next);
-        return next;
-      });
-      setLastSyncedAt(new Date());
-    } catch (reason) {
-      const message = errorMessage(reason);
-      setError(message);
-      throw new Error(message);
-    } finally {
-      setPending(false);
-    }
-  }, []);
+  const createMovie = useCallback(
+    (draft: MovieDraft) => dispatch(createMovieThunk(draft)).unwrap().then(({ movie }) => movie),
+    [dispatch],
+  );
+
+  const updateMovie = useCallback(
+    (id: string, draft: MovieDraft) =>
+      dispatch(updateMovieThunk({ id, draft })).unwrap().then(({ movie }) => movie),
+    [dispatch],
+  );
+
+  const removeMovie = useCallback(
+    async (id: string) => {
+      await dispatch(deleteMovieThunk(id)).unwrap();
+    },
+    [dispatch],
+  );
 
   return {
-    movies,
-    loading,
+    movies: items,
+    loading: status === "idle" || status === "loading",
     pending,
     error,
-    lastSyncedAt,
-    refresh: loadMovies,
+    lastSyncedAt: lastSyncedAt ? new Date(lastSyncedAt) : null,
+    refresh,
     createMovie,
     updateMovie,
     deleteMovie: removeMovie,

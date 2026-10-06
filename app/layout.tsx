@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { StoreProvider } from "./store/redux/StoreProvider";
 import "./globals.css";
 
 const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s | Chill",
   },
   description:
-    "Aplikasi Chill dengan CRUD film dinamis melalui REST API, custom hook, dan Context API.",
+    "Aplikasi Chill dengan CRUD film dinamis melalui REST API, custom hook, dan Redux Toolkit.",
   icons: { icon: "/assets/img/Logo.png" },
   openGraph: {
     title: "Chill - Film dan Series, Tanpa Jeda",
@@ -35,7 +36,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body>{children}</body>
+      <body>
+        <StoreProvider>{children}</StoreProvider>
+      </body>
     </html>
   );
 }

@@ -71,33 +71,52 @@ test("home tersusun dari komponen hierarkis dan data katalog terpisah", async ()
   assert.match(mediaData, /export const newReleases/);
 });
 
-test("homepage mengimplementasikan CRUD dinamis melalui custom hook dan Context API", async () => {
-  const [homePage, crudComponent, managedMovies, apiHook, apiService, context, envExample] = await Promise.all([
+test("homepage mengimplementasikan CRUD API dengan Redux Toolkit", async () => {
+  const [homePage, crudComponent, managedMovies, apiHook, apiService, store, slice, provider, layout, packageJson, envExample] = await Promise.all([
     source("app/components/HomePage.tsx"),
     source("app/components/CustomMoviesCrud.tsx"),
     source("app/data/managedMovies.ts"),
     source("app/hooks/useMoviesApi.ts"),
     source("app/services/api/movieApi.ts"),
-    source("app/context/MoviesContext.tsx"),
+    source("app/store/redux/store.ts"),
+    source("app/store/redux/moviesSlice.ts"),
+    source("app/store/redux/StoreProvider.tsx"),
+    source("app/layout.tsx"),
+    source("package.json"),
     source(".env.example"),
   ]);
 
-  assert.match(homePage, /<MoviesProvider>/);
-  assert.match(homePage, /useMovies\(\)/);
+  assert.match(homePage, /useMoviesApi\(\)/);
   assert.match(homePage, /<CustomMoviesCrud[\s\S]*movies=\{movies\}/);
   assert.match(homePage, /onCreate=\{createMovie\}/);
   assert.match(homePage, /onUpdate=\{updateMovie\}/);
   assert.match(homePage, /onDelete=\{deleteMovie\}/);
 
-  assert.match(context, /createContext<MoviesContextValue/);
-  assert.match(context, /useMoviesApi\(\)/);
-  assert.match(context, /MoviesContext\.Provider/);
+  assert.match(store, /configureStore/);
+  assert.match(store, /movies: moviesReducer/);
+  assert.match(slice, /createSlice/);
+  assert.match(slice, /createAsyncThunk/);
+  assert.match(slice, /items: \[\]/);
+  assert.match(slice, /fetchMovies = createAsyncThunk/);
+  assert.match(slice, /createMovie = createAsyncThunk/);
+  assert.match(slice, /updateMovie = createAsyncThunk/);
+  assert.match(slice, /deleteMovie = createAsyncThunk/);
+  assert.match(slice, /addCase\(fetchMovies\.fulfilled/);
+  assert.match(slice, /addCase\(createMovie\.fulfilled/);
+  assert.match(slice, /addCase\(updateMovie\.fulfilled/);
+  assert.match(slice, /addCase\(deleteMovie\.fulfilled/);
+  assert.match(provider, /<Provider store=\{store\}>/);
+  assert.match(layout, /<StoreProvider>\{children\}<\/StoreProvider>/);
+  assert.match(packageJson, /"@reduxjs\/toolkit"/);
+  assert.match(packageJson, /"react-redux"/);
+
   assert.match(apiHook, /export function useMoviesApi/);
-  assert.match(apiHook, /useState<ManagedMovie\[\]>/);
-  assert.match(apiHook, /getMovies\(ids\)/);
-  assert.match(apiHook, /addMovieRequest\(draft\)/);
-  assert.match(apiHook, /updateMovieRequest\(id, draft\)/);
-  assert.match(apiHook, /deleteMovieRequest\(id\)/);
+  assert.match(apiHook, /useAppSelector/);
+  assert.match(apiHook, /useAppDispatch/);
+  assert.match(apiHook, /dispatch\(fetchMovies\(\)\)/);
+  assert.match(apiHook, /dispatch\(createMovieThunk\(draft\)\)/);
+  assert.match(apiHook, /dispatch\(updateMovieThunk\(\{ id, draft \}\)\)/);
+  assert.match(apiHook, /dispatch\(deleteMovieThunk\(id\)\)/);
   assert.match(apiHook, /window\.localStorage\.setItem/);
 
   assert.match(apiService, /process\.env\.NEXT_PUBLIC_MOVIE_API_URL/);
@@ -114,6 +133,8 @@ test("homepage mengimplementasikan CRUD dinamis melalui custom hook dan Context 
   assert.match(crudComponent, /onUpdate\(editingId, movie\)/);
   assert.match(crudComponent, /onDelete\(movie\.id\)/);
   assert.match(crudComponent, /Kelola Koleksi Film/);
+  assert.match(crudComponent, /REDUX TOOLKIT · CRUD API/);
+  assert.match(crudComponent, /Redux Store · GET · POST · PUT · DELETE/);
   assert.match(crudComponent, /GET · POST · PUT · DELETE/);
   assert.match(crudComponent, /Mengambil data film dari API/);
   assert.match(crudComponent, /Pilih poster film/);
